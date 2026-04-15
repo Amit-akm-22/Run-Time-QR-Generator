@@ -1,349 +1,783 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>UPI QR Generator</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>UPI QR Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- React & Babel (CDN) -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --bg:        #080808;
+      --surface:   #101010;
+      --surface2:  #161616;
+      --surface3:  #1c1c1c;
+      --border:    rgba(255,255,255,0.08);
+      --border-hi: rgba(255,255,255,0.16);
+      --text:      #e8e8e8;
+      --text-2:    #999999;
+      --text-3:    #555555;
+      --white:     #ffffff;
+      --accent:    #59b2ff;
+      --ease:      cubic-bezier(0.2, 1, 0.3, 1);
+    }
 
-    <style>
-      :root {
-        --bg: #121212;
-        --card: #1c1c1c;
-        --input: #0e0e0e;
-        --border: rgba(255, 255, 255, 0.1);
-        --text: #ffffff;
-        --text-dim: #a0a0a0;
-        --accent: #ffffff;
-        --radius: 12px;
-        --ease: cubic-bezier(0.2, 1, 0.3, 1);
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient top glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -300px; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 500px;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.035) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Noise texture */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.028'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #root {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ═══════════════════════════════
+       MAIN WRAPPER
+    ═══════════════════════════════ */
+    .wrap {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      animation: wrapIn 0.6s var(--ease) both;
+    }
+
+    @keyframes wrapIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═══════════════════════════════
+       HERO SECTION
+    ═══════════════════════════════ */
+    .hero {
+      margin-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .hero {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .hero-title-box {
+      display: inline-block;
+      position: relative;
+      margin-bottom: 20px;
+      transform: translateX(-8px);
+    }
+
+    .hero h1 {
+      font-size: clamp(20px, 6.5vw, 48px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: var(--white);
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .hero h1 .highlight {
+      color: var(--white);
+    }
+
+    .hero-underline {
+      height: 2px;
+      width: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+
+    .hero-sparkle {
+      position: absolute;
+      top: -12px;
+      right: -24px;
+      width: 22px;
+      height: 22px;
+      color: var(--text-2);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .hero p {
+      font-size: clamp(10px, 3.2vw, 14px);
+      color: var(--text-2);
+      font-weight: 400;
+      white-space: nowrap;
+    }
+
+    /* ═══════════════════════════════
+       FORM CARD
+    ═══════════════════════════════ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 28px 24px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Top shimmer line */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 24px; right: 24px; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    }
+
+    .fields {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field {}
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .label-text {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-2);
+    }
+
+    .label-opt {
+      font-size: 10px;
+      color: var(--text-3);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .input-wrap { position: relative; }
+
+    .pfx {
+      position: absolute;
+      left: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: var(--text-3);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 16px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input::placeholder { color: var(--text-3); }
+
+    input:focus {
+      border-color: rgba(255,255,255,0.22);
+      background: var(--surface3);
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
+    }
+
+    input.mono-in { font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.02em; }
+    input.has-pfx { padding-left: 34px; }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type="number"] { -moz-appearance: textfield; }
+
+    .field-err { font-size: 11px; color: #ff6b6b; margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+    .field-hint { font-size: 11px; color: var(--text-3); margin-top: 5px; }
+
+    /* Two-col row */
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ═══════════════════════════════
+       GENERATE BUTTON
+    ═══════════════════════════════ */
+    .btn-gen {
+      width: 100%;
+      margin-top: 20px;
+      background: #ffffff;
+      border: none;
+      border-radius: 12px;
+      padding: 15px 24px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #080808;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.18s var(--ease), box-shadow 0.2s, background 0.2s;
+      box-shadow: 0 6px 24px rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    /* Shine sweep */
+    .btn-gen::before {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+      animation: sweep 3.5s ease-in-out infinite;
+    }
+
+    @keyframes sweep { 0%,100%{left:-100%} 50%{left:150%} }
+
+    .btn-gen:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(255,255,255,0.18), 0 4px 12px rgba(0,0,0,0.4);
+      background: #f2f2f2;
+    }
+    .btn-gen:active { transform: translateY(0); box-shadow: 0 3px 12px rgba(255,255,255,0.1); }
+    .btn-gen:disabled { opacity: 0.25; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-gen:disabled::before { animation: none; }
+
+    .btn-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 9px; }
+
+    /* ═══════════════════════════════
+       QR RESULT
+    ═══════════════════════════════ */
+    .qr-section {
+      margin-top: 16px;
+      animation: qrIn 0.55s var(--ease) both;
+    }
+
+    @keyframes qrIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .qr-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .qr-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 24px; right: 24px; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    }
+
+    /* White QR box */
+    .qr-img-box {
+      flex-shrink: 0;
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    #qr-container canvas,
+    #qr-container img { display: block; border-radius: 4px; }
+
+    /* QR meta — right side */
+    .qr-meta {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .qr-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .qr-payee {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--white);
+      line-height: 1.1;
+    }
+
+    .qr-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-2);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .qr-amt {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 100px;
+      padding: 5px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--white);
+      margin-top: 2px;
+    }
+
+    .qr-hint {
+      font-size: 10.5px;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    /* divider inside QR card */
+    .qr-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 10px 0;
+    }
+
+    /* UPI link */
+    .upi-block {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .upi-lbl { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+    .upi-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: rgba(255,255,255,0.4);
+      word-break: break-all;
+      line-height: 1.55;
+    }
+
+    /* Action buttons */
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn-act {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 13px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+    }
+
+    .btn-act:hover {
+      background: var(--surface3);
+      border-color: var(--border-hi);
+      transform: translateY(-1px);
+    }
+    .btn-act:active { transform: translateY(0); }
+    .btn-act.ok { color: #fff; border-color: rgba(255,255,255,0.2); background: var(--surface3); }
+
+    /* ═══════════════════════════════
+       FOOTER
+    ═══════════════════════════════ */
+    .footer {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+
+    .credit {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.03em;
+    }
+    .credit b { color: var(--text-2); font-weight: 600; }
+    .heart { color: #cc3333; font-style: normal; display: inline-block; animation: hb 1.5s ease-in-out infinite; }
+    @keyframes hb { 0%,100%{transform:scale(1);}14%{transform:scale(1.25);}28%{transform:scale(1);}42%{transform:scale(1.18);}56%{transform:scale(1);} }
+
+    .tech-pills { display: flex; gap: 5px; }
+    .tpill {
+      font-size: 9.5px;
+      color: var(--text-3);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 3px 9px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+    }
+
+    /* ═══════════════════════════════
+       TOAST
+    ═══════════════════════════════ */
+    .toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--white);
+      color: var(--bg);
+      border-radius: 100px;
+      padding: 10px 22px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 1000;
+      pointer-events: none;
+      animation: toastIn 0.3s var(--ease);
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.94); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+
+    /* ═══════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════ */
+    @media (max-width: 520px) {
+      body { padding: 24px 14px 32px; }
+      .wrap { max-width: 100%; }
+      .qr-card { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .qr-img-box { align-self: center; }
+      .row-2 { grid-template-columns: 1fr; }
+      .headline h1 { font-size: 28px; }
+      .actions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+  const { useState, useEffect, useRef } = React;
+
+  /* — Icons — */
+  const IQR = () => (
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+      <path d="M14 14h3v3h-3z M18 18h3v3h-3z"/>
+    </svg>
+  );
+  const IDl = () => (
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+  );
+  const ICp = () => (
+    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>
+  );
+  const ICk = () => (
+    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  );
+
+  function App() {
+    const [upiId, setUpiId]   = useState('');
+    const [payee, setPayee]   = useState('');
+    const [amount, setAmount] = useState('');
+    const [link, setLink]     = useState('');
+    const [gen, setGen]       = useState(false);
+    const [copied, setCopied] = useState(false);
+    const [toast, setToast]   = useState('');
+    const [err, setErr]       = useState('');
+    const qrRef  = useRef(null);
+    const qrInst = useRef(null);
+
+    /* Load QRCode.js */
+    useEffect(() => {
+      if (window.QRCode) return;
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      s.async = true;
+      document.head.appendChild(s);
+    }, []);
+
+    /* Render QR */
+    useEffect(() => {
+      if (!link || !qrRef.current || !window.QRCode) return;
+      if (qrInst.current) { qrRef.current.innerHTML = ''; qrInst.current = null; }
+      qrInst.current = new window.QRCode(qrRef.current, {
+        text: link, width: 150, height: 150,
+        colorDark: '#080808', colorLight: '#ffffff',
+        correctLevel: window.QRCode.CorrectLevel.H
+      });
+    }, [link]);
+
+    const flash = m => { setToast(m); setTimeout(() => setToast(''), 2200); };
+
+    const doGen = () => {
+      if (!upiId.trim()) { setErr('UPI ID is required'); return; }
+      if (!upiId.includes('@')) { setErr('Must include @ symbol (e.g. name@upi)'); return; }
+      setErr('');
+      let l = `upi://pay?pa=${encodeURIComponent(upiId.trim())}`;
+      if (payee.trim()) l += `&pn=${encodeURIComponent(payee.trim())}`;
+      if (amount.trim() && +amount > 0) l += `&am=${encodeURIComponent(amount.trim())}`;
+      l += '&cu=INR';
+      setLink(l);
+      setGen(true);
+    };
+
+    const doDl = () => {
+      const c = qrRef.current?.querySelector('canvas');
+      if (!c) return;
+      const sz = c.width + 32;
+      const ctx = Object.assign(document.createElement('canvas'), { width: sz, height: sz }).getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, sz, sz);
+      ctx.drawImage(c, 16, 16);
+      const a = document.createElement('a');
+      a.download = 'upi-qr.png'; a.href = ctx.canvas.toDataURL('image/png'); a.click();
+      flash('QR downloaded!');
+    };
+
+    const doCp = async () => {
+      try {
+        await navigator.clipboard.writeText(link);
+      } catch {
+        const t = document.createElement('textarea');
+        t.value = link; t.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t);
       }
+      setCopied(true); flash('Link copied!');
+      setTimeout(() => setCopied(false), 2200);
+    };
 
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      
-      body {
-        background-color: var(--bg);
-        color: var(--text);
-        font-family: 'Inter', sans-serif;
-        height: 100vh;
-        height: 100dvh;
-        overflow: hidden; /* Single page, no scroll */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-      }
+    return (
+      <>
+        <div className="wrap">
+          <div className="hero">
+            <div className="hero-title-box">
+              <h1>Run-Time <span className="highlight">QR Generator</span></h1>
+              <svg className="hero-sparkle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2z" fill="currentColor" stroke="none" />
+              </svg>
+              <div className="hero-underline"/>
+            </div>
+            <p>Generate a scannable payment code in seconds. No apps, no sign-up.</p>
+          </div>
 
-      #root { width: 100%; max-width: 440px; }
-
-      .container {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        animation: fadeIn 0.6s var(--ease);
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      header { text-align: center; }
-      h1 {
-        font-family: 'DM Serif Display', serif;
-        font-size: 2.2rem;
-        letter-spacing: -0.01em;
-        margin-bottom: 4px;
-      }
-      header p {
-        font-size: 14px;
-        color: var(--text-dim);
-        font-weight: 300;
-      }
-
-      .card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 24px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-      }
-
-      .form-group { margin-bottom: 16px; }
-      label {
-        display: block;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--text-dim);
-        margin-bottom: 6px;
-      }
-      
-      .input-wrap { position: relative; }
-      .prefix {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 14px;
-        color: var(--text-dim);
-      }
-
-      input {
-        width: 100%;
-        background: var(--input);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 12px 14px;
-        color: var(--text);
-        font-size: 15px;
-        font-family: inherit;
-        outline: none;
-        transition: border-color 0.2s;
-      }
-      input:focus { border-color: rgba(255,255,255,0.4); }
-      input.has-prefix { padding-left: 32px; font-family: 'JetBrains Mono', monospace; }
-
-      .btn-main {
-        width: 100%;
-        background: #ffffff;
-        color: #000000;
-        border: none;
-        border-radius: 8px;
-        padding: 14px;
-        font-weight: 700;
-        font-size: 14px;
-        cursor: pointer;
-        transition: transform 0.1s;
-        margin-top: 8px;
-      }
-      .btn-main:active { transform: scale(0.98); }
-      .btn-main:disabled { opacity: 0.3; cursor: not-allowed; }
-
-      .qr-result {
-        margin-top: 24px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        animation: qrIn 0.5s var(--ease);
-      }
-      @keyframes qrIn {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
-      }
-
-      #qr-container {
-        background: #ffffff;
-        padding: 12px;
-        border-radius: 8px;
-      }
-      #qr-container canvas, #qr-container img { display: block; }
-
-      .qr-details { text-align: center; }
-      .qr-id { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim); }
-      .qr-amt { font-size: 18px; font-weight: 700; margin-top: 2px; }
-
-      .actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        width: 100%;
-      }
-      .btn-sec {
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--text);
-        padding: 10px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-      }
-      .btn-sec:hover { background: rgba(255,255,255,0.05); }
-
-      footer {
-        margin-top: 24px;
-        text-align: center;
-        font-size: 11px;
-        color: var(--text-dim);
-      }
-      .credit {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(255,255,255,0.03);
-        padding: 4px 12px;
-        border-radius: 100px;
-        border: 1px solid var(--border);
-      }
-      .heart { color: #ff4b4b; }
-
-      .toast {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #ffffff;
-        color: #000000;
-        padding: 8px 16px;
-        border-radius: 100px;
-        font-size: 12px;
-        font-weight: 600;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        z-index: 1000;
-      }
-
-      @media (max-width: 400px) {
-        h1 { font-size: 1.8rem; }
-        .card { padding: 18px; }
-      }
-
-      /* Viewport height adjustments for small screens to stay "one page" */
-      @media (max-height: 700px) {
-        .container { gap: 12px; }
-        header { margin-bottom: 0; }
-        h1 { font-size: 1.5rem; }
-        .card { padding: 16px; }
-        .form-group { margin-bottom: 12px; }
-        footer { margin-top: 12px; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-
-    <script type="text/babel">
-      const { useState, useEffect, useRef } = React;
-
-      function App() {
-        const [upiId, setUpiId] = useState('');
-        const [payee, setPayee] = useState('');
-        const [amount, setAmount] = useState('');
-        const [upiLink, setUpiLink] = useState('');
-        const [gen, setGen] = useState(false);
-        const [toast, setToast] = useState('');
-        const qrRef = useRef(null);
-        const qrInst = useRef(null);
-
-        useEffect(() => {
-          if (window.QRCode) return;
-          const s = document.createElement('script');
-          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-          s.async = true;
-          document.head.appendChild(s);
-        }, []);
-
-        useEffect(() => {
-          if (!upiLink || !qrRef.current) return;
-          if (qrInst.current) { qrRef.current.innerHTML = ''; qrInst.current = null; }
-          qrInst.current = new window.QRCode(qrRef.current, {
-            text: upiLink, width: 140, height: 140,
-            colorDark: '#000000', colorLight: '#ffffff',
-            correctLevel: window.QRCode.CorrectLevel.H
-          });
-        }, [upiLink]);
-
-        const showToast = (m) => {
-          setToast(m);
-          setTimeout(() => setToast(''), 2000);
-        };
-
-        const handleGen = () => {
-          if (!upiId.includes('@')) { showToast('Invalid UPI ID'); return; }
-          let link = `upi://pay?pa=${encodeURIComponent(upiId)}`;
-          if (payee) link += `&pn=${encodeURIComponent(payee)}`;
-          if (amount) link += `&am=${encodeURIComponent(amount)}`;
-          link += '&cu=INR';
-          setUpiLink(link);
-          setGen(true);
-        };
-
-        const handleCopy = () => {
-          navigator.clipboard.writeText(upiLink);
-          showToast('Link copied!');
-        };
-
-        const handleDl = () => {
-          const canvas = qrRef.current.querySelector('canvas');
-          if (!canvas) return;
-          const link = document.createElement('a');
-          link.download = 'qr.png';
-          link.href = canvas.toDataURL();
-          link.click();
-          showToast('Downloaded!');
-        };
-
-        return (
-          <div className="container">
-            <header>
-              <h1>UPI Generator</h1>
-              <p>Create payment stickers in seconds</p>
-            </header>
-
-            <div className="card">
-              <div className="form-group">
-                <label>UPI ID</label>
-                <input type="text" placeholder="name@upi" value={upiId} onChange={e => setUpiId(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label>Payee Name</label>
-                <input type="text" placeholder="e.g. John Doe" value={payee} onChange={e => setPayee(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label>Amount (optional)</label>
+          {/* Form card */}
+          <div className="card">
+            <div className="fields">
+              {/* UPI ID */}
+              <div className="field">
+                <div className="field-label">
+                  <span className="label-text">UPI ID</span>
+                  <span style={{color:'rgba(255,255,255,0.18)', fontSize:10}}>required</span>
+                </div>
                 <div className="input-wrap">
-                  <span className="prefix">₹</span>
-                  <input className="has-prefix" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} />
+                  <input
+                    id="upi-id"
+                    className="mono-in"
+                    type="text"
+                    placeholder="yourname@upi"
+                    value={upiId}
+                    onChange={e => { setUpiId(e.target.value); setErr(''); }}
+                    autoComplete="off" spellCheck="false"
+                  />
                 </div>
+                {err
+                  ? <div className="field-err">⚠ {err}</div>
+                  : <div className="field-hint">e.g. 9876543210@upi · name@oksbi · id@paytm</div>
+                }
               </div>
 
-              <button className="btn-main" onClick={handleGen} disabled={!upiId}>
-                {gen ? 'Update QR' : 'Generate QR Code'}
-              </button>
-
-              {gen && (
-                <div className="qr-result">
-                  <div id="qr-container" ref={qrRef} />
-                  <div className="qr-details">
-                    <div className="qr-id">{upiId}</div>
-                    {amount && <div className="qr-amt">₹ {amount}</div>}
+              {/* Name + Amount in a row */}
+              <div className="row-2">
+                <div className="field">
+                  <div className="field-label">
+                    <span className="label-text">Payee Name</span>
+                    <span className="label-opt">optional</span>
                   </div>
-                  <div className="actions">
-                    <button className="btn-sec" onClick={handleDl}>Download</button>
-                    <button className="btn-sec" onClick={handleCopy}>Copy Link</button>
+                  <input
+                    id="payee"
+                    type="text"
+                    placeholder="Amit Manmode"
+                    value={payee}
+                    onChange={e => setPayee(e.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="field">
+                  <div className="field-label">
+                    <span className="label-text">Amount</span>
+                    <span className="label-opt">optional</span>
+                  </div>
+                  <div className="input-wrap">
+                    <span className="pfx">₹</span>
+                    <input
+                      id="amount"
+                      className="mono-in has-pfx"
+                      type="number"
+                      placeholder="0.00"
+                      value={amount}
+                      onChange={e => setAmount(e.target.value)}
+                      min="0" step="0.01"
+                    />
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
-            <footer>
-              <div className="credit">
-                <span>&gt;_ crafted by <strong>Amit</strong> with <span className="heart">♥</span></span>
-              </div>
-            </footer>
-
-            {toast && <div className="toast">{toast}</div>}
+            {/* Generate */}
+            <button id="btn-gen" className="btn-gen" onClick={doGen} disabled={!upiId.trim()}>
+              <span className="btn-inner">
+                <IQR/>
+                {gen ? 'Update QR Code' : 'Generate QR Code'}
+              </span>
+            </button>
           </div>
-        );
-      }
 
-      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-    </script>
-  </body>
+          {/* QR Result */}
+          {gen && (
+            <div className="qr-section" key={link}>
+              <div className="qr-card">
+                {/* QR image */}
+                <div className="qr-img-box">
+                  <div id="qr-container" ref={qrRef}/>
+                </div>
+
+                {/* Meta */}
+                <div className="qr-meta">
+                  <div className="qr-label">Ready to scan</div>
+                  {payee && <div className="qr-payee">{payee}</div>}
+                  <div className="qr-id">{upiId}</div>
+                  {amount && +amount > 0 && (
+                    <div className="qr-amt">
+                      ₹ {parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}
+                    </div>
+                  )}
+                  <div className="qr-hint">📱 Scan with any UPI app</div>
+
+                  <div className="qr-divider"/>
+
+                  <div className="upi-block">
+                    <div className="upi-lbl">UPI Deep Link</div>
+                    <div className="upi-val">{link}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="actions">
+                <button id="btn-dl" className="btn-act" onClick={doDl}>
+                  <IDl/> Download PNG
+                </button>
+                <button id="btn-cp" className={`btn-act${copied ? ' ok' : ''}`} onClick={doCp}>
+                  {copied ? <ICk/> : <ICp/>} {copied ? 'Copied!' : 'Copy UPI Link'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="footer">
+            <div className="credit">
+              <span>&gt;_</span>
+              <span>crafted by <b>Amit</b> with <em className="heart">♥</em></span>
+            </div>
+            <div className="tech-pills">
+              <span className="tpill">React 18</span>
+              <span className="tpill">QRCode.js</span>
+              <span className="tpill">UPI</span>
+            </div>
+          </div>
+        </div>
+
+        {toast && <div className="toast">{toast}</div>}
+      </>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
 </html>
