@@ -27,6 +27,12 @@ Create flawless, scannable UPI payment QR codes instantly directly in your brows
 ### 🛠 Tech Stack & Tools Used
 Built as a powerful **Single-File React Application**, utilizing no build steps for pure simplicity and portability.
 
+<p align="center">
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=html,css,js,react,babel,git,github,vscode&theme=dark" alt="Tech Stack 3D Icons" />
+  </a>
+</p>
+
 * **HTML5 & CSS3**: Core structural and visual framework with advanced CSS clamp scaling and CSS variables.
 * **React 18**: Dynamic UI state management (served via CDN).
 * **Babel Standalone**: In-browser JSX transpilation (served via CDN).
