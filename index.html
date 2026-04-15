@@ -352,13 +352,14 @@
       .qr-card {
         background: #ffffff;
         border-radius: var(--radius-lg);
-        padding: 28px;
+        padding: 32px 24px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0;
+        gap: 20px;
         box-shadow: var(--shadow-qr);
         position: relative;
+        width: 100%;
       }
 
       .qr-card::before {
@@ -374,21 +375,28 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 220px;
-        height: 220px;
+        width: 100%;
+        max-width: 220px;
+        aspect-ratio: 1/1;
+        margin: 0 auto;
+        position: relative;
       }
 
       #qr-container canvas,
       #qr-container img {
+        width: 100% !important;
+        height: 100% !important;
         border-radius: 4px;
+        display: block;
       }
 
       .qr-logo-strip {
-        margin-top: 14px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 2px;
+        gap: 4px;
+        width: 100%;
+        text-align: center;
       }
 
       .qr-payee {
@@ -407,16 +415,16 @@
       }
 
       .qr-amount-badge {
-        margin-top: 8px;
         background: linear-gradient(135deg, #d4a853, #b08030);
         color: #fff;
-        padding: 4px 14px;
+        padding: 6px 16px;
         border-radius: 100px;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 700;
         font-family: 'Inter', sans-serif;
         letter-spacing: 0.03em;
-        box-shadow: 0 2px 8px rgba(176,128,48,0.35);
+        box-shadow: 0 4px 12px rgba(176,128,48,0.25);
+        margin-top: 4px;
       }
 
       /* ─── UPI Link Display ──────────────────────────────── */
@@ -638,18 +646,19 @@
         .form-input.has-prefix { padding-left: 32px; }
         .input-prefix { left: 12px; font-size: 14px; }
         .action-buttons { grid-template-columns: 1fr; gap: 10px; }
-        .qr-canvas-wrapper { width: 175px; height: 175px; }
+        .qr-canvas-wrapper { max-width: 190px; }
         .btn-generate { padding: 14px 20px; font-size: 13px; }
-        .qr-card { padding: 20px 16px; }
+        .qr-card { padding: 24px 16px; gap: 16px; }
         .app-badge { font-size: 10px; padding: 3px 12px; }
       }
 
       /* Very small (360px) */
       @media (max-width: 360px) {
-        .qr-canvas-wrapper { width: 155px; height: 155px; }
+        .qr-canvas-wrapper { max-width: 170px; }
         .action-buttons { grid-template-columns: 1fr; }
         .btn-action { padding: 12px 14px; font-size: 12px; }
         .upi-link-text { font-size: 11px; }
+        .qr-card { padding: 20px 12px; gap: 12px; }
       }
     </style>
   </head>
@@ -1011,7 +1020,7 @@
                       </div>
 
                       {/* Scan hint */}
-                      <p style={{marginTop:12, fontSize:11, color:'#999', letterSpacing:'0.04em', fontFamily:'Inter, sans-serif'}}>
+                      <p style={{fontSize:11, color:'#777', letterSpacing:'0.04em', fontFamily:'Inter, sans-serif'}}>
                         📱 Scan with any UPI app to pay
                       </p>
                     </div>
