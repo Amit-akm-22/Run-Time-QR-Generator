@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/preview.png" alt="Run-Time QR Generator Showcase" width="100%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+  <img src="Assests/Home%20Page.png" alt="Run-Time QR Generator Showcase" width="100%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
 </div>
 
 <br />
